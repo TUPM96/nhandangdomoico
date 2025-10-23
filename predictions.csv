@@ -1,0 +1,53 @@
+file,y_true,y_pred,score
+dataset\fatigue\Christi_F.csv,1,1,1.0
+dataset\fatigue\Faris_F.csv,1,1,1.0
+dataset\fatigue\Hasna_F.csv,1,1,0.6666666666666666
+dataset\fatigue\Khayla_F.csv,1,1,0.6666666666666666
+dataset\fatigue\Nazla_F.csv,1,1,1.0
+dataset\fatigue\Niken_F.csv,1,1,0.6666666666666666
+dataset\fatigue\Rona_F.csv,1,1,1.0
+dataset\fatigue\Shalsa_F.csv,1,1,0.6666666666666666
+dataset\fatigue\aida_F.csv,1,0,0.3333333333333333
+dataset\fatigue\aldhito_F.csv,1,0,0.3333333333333333
+dataset\fatigue\azka_F.csv,1,0,0.3333333333333333
+dataset\fatigue\caca_F.csv,1,1,0.6666666666666666
+dataset\fatigue\giselle_F - Copy.csv,1,1,0.6666666666666666
+dataset\fatigue\insan_F.csv,1,1,0.6666666666666666
+dataset\fatigue\ipul_F.csv,1,0,0.3333333333333333
+dataset\fatigue\iqbal_F.h5.csv,1,0,0.3333333333333333
+dataset\fatigue\jeki_F.csv,1,0,0.3333333333333333
+dataset\fatigue\nae_F.csv,1,0,0.3333333333333333
+dataset\fatigue\nazhir_F.csv,1,0,0.3333333333333333
+dataset\fatigue\niko_F.csv,1,1,0.6666666666666666
+dataset\fatigue\putri_F.csv,1,0,0.3333333333333333
+dataset\fatigue\raffa_F.csv,1,1,1.0
+dataset\fatigue\sipa_F.csv,1,0,0.3333333333333333
+dataset\fatigue\tarisa_F.csv,1,0,0.3333333333333333
+dataset\fatigue\tyo_F.csv,1,0,0.3333333333333333
+dataset\fatigue\umar_F.csv,1,1,0.6666666666666666
+dataset\non fatigue\Christi_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\Faris_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\Hasna_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\Khayla_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\Nae_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\Nazla_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\Rona_NF.csv,0,1,1.0
+dataset\non fatigue\Shalsa_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\aida_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\aldhito_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\azka_NF.csv,0,1,1.0
+dataset\non fatigue\caca_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\giselle_NF.csv,0,1,1.0
+dataset\non fatigue\insan_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\ipul_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\iqbal_NF.csv,0,1,1.0
+dataset\non fatigue\jeki_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\nazhir_NF.csv,0,1,1.0
+dataset\non fatigue\niken_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\niko_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\putri_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\raffa_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\syifa_NF.csv,0,0,0.3333333333333333
+dataset\non fatigue\tarisa_NF.csv,0,1,0.6666666666666666
+dataset\non fatigue\tyo_NF.csv,0,1,1.0
+dataset\non fatigue\umar_NF.csv,0,1,1.0

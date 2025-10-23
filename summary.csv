@@ -1,0 +1,2 @@
+model,accuracy_mean,accuracy_std,precision_mean,recall_mean,f1_mean,f1_std,specificity_mean,auc_mean,train_time_mean
+SVM_RBF,0.55625,0.12993721774593897,0.5538034188034188,0.55,0.5250923912688619,0.21518615608302424,0.5625,0.4546875,0.5683727741241456
