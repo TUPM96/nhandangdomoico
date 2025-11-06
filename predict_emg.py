@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Predict/evaluate sEMG fatigue using a trained model (best_model.joblib).
-- If --data points to a folder with {fatigue, non_fatigue} (or "non fatigue"), it evaluates and reports metrics.
-- If --data points to a single CSV file, it predicts its label and probability.
-Works with models saved by emg_classify_full.py (pipeline with StandardScaler + classifier).
+Predict/evaluate sEMG fatigue using a trained model (best_svm_model.pkl or best_model.joblib).
+
+- Nếu --data là 1 thư mục chứa {fatigue, non_fatigue} (hoặc "non fatigue"), chương trình sẽ đánh giá và xuất các metric.
+- Nếu --data là 1 file CSV, chương trình sẽ dự đoán nhãn và xác suất mỏi cơ.
+
+Tương thích với cả model sklearn pipeline (.joblib) và model dict {model, scaler, feature_selector} (.pkl).
 """
+
 import argparse
 import os
 from glob import glob
@@ -13,12 +16,12 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
-
 from scipy.signal import butter, filtfilt, iirnotch, welch
 from scipy.stats import skew, kurtosis
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score, roc_curve
 
-# ---------- signal & features (must match training) ----------
+
+# ---------- signal & feature extraction ----------
 def bandpass_notch_filter(x, fs, bp=(20, 450), notch=50.0, q=30.0):
     nyq = 0.5 * fs
     low = max(1.0, bp[0]) / nyq
@@ -31,12 +34,14 @@ def bandpass_notch_filter(x, fs, bp=(20, 450), notch=50.0, q=30.0):
         xf = filtfilt(b_notch, a_notch, xf)
     return xf
 
+
 def zero_crossings(x, thresh=0.0):
     zc = 0
     for i in range(1, len(x)):
         if (x[i-1] < -thresh and x[i] > thresh) or (x[i-1] > thresh and x[i] < -thresh):
             zc += 1
     return zc
+
 
 def slope_sign_changes(x, thresh=0.0):
     ssc = 0
@@ -47,8 +52,10 @@ def slope_sign_changes(x, thresh=0.0):
             ssc += 1
     return ssc
 
+
 def waveform_length(x):
     return np.sum(np.abs(np.diff(x)))
+
 
 def bandpowers_welch(x, fs, bands):
     f, Pxx = welch(x, fs=fs, nperseg=min(1024, len(x)))
@@ -56,8 +63,9 @@ def bandpowers_welch(x, fs, bands):
     bp_vals = []
     for (f1, f2) in bands:
         mask = (f >= f1) & (f <= f2)
-        bp_vals.append(np.trapz(Pxx[mask], f[mask]) if np.any(mask) else 0.0)
+        bp_vals.append(np.trapezoid(Pxx[mask], f[mask]) if np.any(mask) else 0.0)
     return bp_vals, f, Pxx
+
 
 def mnf_mdf_from_psd(f, Pxx):
     mnf = np.sum(f * Pxx) / np.sum(Pxx)
@@ -67,13 +75,14 @@ def mnf_mdf_from_psd(f, Pxx):
     mdf = f[idx] if idx < len(f) else f[-1]
     return mnf, mdf
 
+
 def extract_features_from_signal(x, fs):
     x = np.asarray(x).astype(float)
     rms = np.sqrt(np.mean(x ** 2))
     mav = np.mean(np.abs(x))
     wl = waveform_length(x)
-    zc = zero_crossings(x, thresh=0.0)
-    ssc = slope_sign_changes(x, thresh=0.0)
+    zc = zero_crossings(x)
+    ssc = slope_sign_changes(x)
     vmin = np.min(x)
     vmax = np.max(x)
     xmean = np.mean(x)
@@ -85,18 +94,19 @@ def extract_features_from_signal(x, fs):
     bands = [(10, 30), (30, 70), (70, 100), (100, 200)]
     bp_vals, f, Pxx = bandpowers_welch(x, fs, bands)
     mnf, mdf = mnf_mdf_from_psd(f, Pxx)
-    total_power = np.trapz(Pxx, f)
+    total_power = np.trapezoid(Pxx, f)
     spectral_centroid = np.sum(f * Pxx) / (np.sum(Pxx) + 1e-12)
-    feats = [rms, mav, wl, zc, ssc, vmin, vmax, xmean, xstd, xvar, xmad, xskew, xkurt,
-             mnf, mdf, spectral_centroid, total_power] + bp_vals
+    feats = [rms, mav, wl, zc, ssc, vmin, vmax, xmean, xstd, xvar, xmad,
+             xskew, xkurt, mnf, mdf, spectral_centroid, total_power] + bp_vals
     return np.array(feats, dtype=float)
 
+
 def _read_signal_csv(fpath):
-    # robust CSV reader (pandas autodetect sep, accept headers and NaN)
     try:
         df = pd.read_csv(fpath, engine="python", sep=None)
     except Exception:
         df = pd.read_csv(fpath, engine="python", sep=",", on_bad_lines="skip")
+
     if "amplitudo" in df.columns:
         ser = pd.to_numeric(df["amplitudo"], errors="coerce")
     else:
@@ -106,10 +116,12 @@ def _read_signal_csv(fpath):
             raise ValueError(f"No numeric data in {fpath}")
         best_col = valid_counts.idxmax()
         ser = num_df[best_col]
+
     sig = ser.dropna().to_numpy(dtype=float).squeeze()
     if sig.ndim != 1 or sig.size == 0:
         raise ValueError(f"Cannot extract 1-D signal from {fpath}")
     return sig
+
 
 # ---------- evaluation helpers ----------
 def build_test_matrix(root, fs=1000.0, expect_feature_vector=False):
@@ -129,18 +141,20 @@ def build_test_matrix(root, fs=1000.0, expect_feature_vector=False):
                 df = pd.read_csv(f, engine="python", sep=None)
                 num = df.apply(pd.to_numeric, errors="coerce").values.reshape(-1)
                 vec = num[~np.isnan(num)]
-                X.append(vec); y.append(label); paths.append(f)
+                X.append(vec)
+                y.append(label)
+                paths.append(f)
             else:
                 sig = _read_signal_csv(f)
-                sig = bandpass_notch_filter(sig, fs=fs, bp=(20,450), notch=50.0, q=30.0)
-                sig = sig - np.mean(sig)
-                sig = sig / (np.std(sig) + 1e-12)
+                sig = bandpass_notch_filter(sig, fs=fs)
+                sig = (sig - np.mean(sig)) / (np.std(sig) + 1e-12)
                 if sig.shape[0] > int(2.0 * fs):
                     start = int(0.5 * fs)
-                    sig = sig[start:start+int(1.0*fs)]
-                X.append(extract_features_from_signal(sig, fs)); y.append(label); paths.append(f)
+                    sig = sig[start:start + int(1.0 * fs)]
+                X.append(extract_features_from_signal(sig, fs))
+                y.append(label)
+                paths.append(f)
 
-    # pad if feature-vectors differ
     X = np.array(X, dtype=object)
     if X.dtype == object:
         maxlen = max(len(v) for v in X)
@@ -151,10 +165,11 @@ def build_test_matrix(root, fs=1000.0, expect_feature_vector=False):
         X = Xp
     return X, np.array(y, dtype=int), paths
 
-def save_cm(cm, labels=("Non-fatigue","Fatigue"), title="Confusion Matrix", out="cm_eval.png"):
+
+def save_cm(cm, labels=("Non-fatigue", "Fatigue"), out="cm_eval.png"):
     plt.figure()
-    im = plt.imshow(cm, interpolation="nearest")
-    plt.title(title)
+    im = plt.imshow(cm, interpolation="nearest", cmap="Blues")
+    plt.title("Confusion Matrix")
     plt.colorbar(im)
     ticks = np.arange(len(labels))
     plt.xticks(ticks, labels, rotation=45)
@@ -168,19 +183,55 @@ def save_cm(cm, labels=("Non-fatigue","Fatigue"), title="Confusion Matrix", out=
     plt.savefig(out, dpi=200)
     plt.close()
 
+
+# ---------- main ----------
 def main():
     ap = argparse.ArgumentParser(description="Predict/Evaluate sEMG fatigue with a trained model.")
-    ap.add_argument("--model", default="best_model.joblib", help="Path to trained model (.joblib)")
+    ap.add_argument("--model", default="best_svm_model.pkl", help="Path to trained model (.pkl or .joblib)")
     ap.add_argument("--data", required=True, help="Test CSV file OR folder with {fatigue, non_fatigue}")
     ap.add_argument("--fs", type=float, default=1000.0, help="Sampling rate for raw signals")
     ap.add_argument("--expect-feature-vector", action="store_true",
                     help="If set, input CSVs are treated as precomputed feature vectors")
     args = ap.parse_args()
 
-    clf = joblib.load(args.model)
+    clf_loaded = joblib.load(args.model)
 
+    # ---- WRAPPER cho dict {model, scaler, feature_selector} ----
+    if isinstance(clf_loaded, dict) and all(k in clf_loaded for k in ("model", "scaler", "feature_selector")):
+        class _Wrapper:
+            def __init__(self, d):
+                self.model = d["model"]
+                self.scaler = d["scaler"]
+                self.selector = d["feature_selector"]
+
+            def _tx(self, X):
+                Xs = self.scaler.transform(X)
+                Xk = self.selector.transform(Xs)
+                return Xk
+
+            def predict(self, X):
+                return self.model.predict(self._tx(X))
+
+            def predict_proba(self, X):
+                Xk = self._tx(X)
+                if hasattr(self.model, "predict_proba"):
+                    return self.model.predict_proba(Xk)
+                dec = self.model.decision_function(Xk).ravel()
+                prob = (dec - dec.min()) / (dec.ptp() + 1e-12)
+                return np.vstack([1.0 - prob, prob]).T
+
+            def decision_function(self, X):
+                if hasattr(self.model, "decision_function"):
+                    return self.model.decision_function(self._tx(X))
+                proba = self.predict_proba(X)[:, 1]
+                return (proba - 0.5) * 2.0
+
+        clf = _Wrapper(clf_loaded)
+    else:
+        clf = clf_loaded
+
+    # ---- EVALUATE hoặc PREDICT ----
     if os.path.isdir(args.data):
-        # Evaluate on folder
         X, y, paths = build_test_matrix(args.data, fs=args.fs, expect_feature_vector=args.expect_feature_vector)
         if hasattr(clf, "predict_proba"):
             y_score = clf.predict_proba(X)[:, 1]
@@ -200,24 +251,22 @@ def main():
             auc = float("nan")
 
         print("=== EVALUATION ON TEST FOLDER ===")
-        print(f"Samples: {len(y)} | Accuracy: {acc:.4f} | Precision: {prec:.4f} | Recall: {rec:.4f} | F1: {f1:.4f} | AUC: {auc:.4f}")
-        save_cm(cm, out="cm_eval.png")
-        # Save predictions
-        out_df = pd.DataFrame({
+        print(f"Samples: {len(y)} | Accuracy: {acc:.4f} | Precision: {prec:.4f} | Recall: {rec:.4f} | "
+              f"F1: {f1:.4f} | AUC: {auc:.4f}")
+        save_cm(cm)
+        pd.DataFrame({
             "file": paths,
             "y_true": y,
             "y_pred": y_pred,
             "score": y_score
-        })
-        out_df.to_csv("predictions.csv", index=False)
+        }).to_csv("predictions.csv", index=False)
         print("Saved: predictions.csv, cm_eval.png")
 
-        # ROC curve on test
         try:
             fpr, tpr, _ = roc_curve(y, y_score)
             plt.figure()
             plt.plot(fpr, tpr, label="ROC (test)")
-            plt.plot([0,1], [0,1], linestyle="--")
+            plt.plot([0, 1], [0, 1], linestyle="--")
             plt.xlabel("False Positive Rate")
             plt.ylabel("True Positive Rate")
             plt.title("ROC on Test Set")
@@ -230,7 +279,6 @@ def main():
             pass
 
     else:
-        # Predict single CSV
         f = args.data
         if args.expect_feature_vector:
             df = pd.read_csv(f, engine="python", sep=None)
@@ -239,9 +287,8 @@ def main():
             X = vec.reshape(1, -1)
         else:
             sig = _read_signal_csv(f)
-            sig = bandpass_notch_filter(sig, fs=args.fs, bp=(20,450), notch=50.0, q=30.0)
-            sig = sig - np.mean(sig)
-            sig = sig / (np.std(sig) + 1e-12)
+            sig = bandpass_notch_filter(sig, fs=args.fs)
+            sig = (sig - np.mean(sig)) / (np.std(sig) + 1e-12)
             X = extract_features_from_signal(sig, fs=args.fs).reshape(1, -1)
 
         if hasattr(clf, "predict_proba"):
@@ -250,10 +297,10 @@ def main():
             dec = clf.decision_function(X).ravel()
             prob = (dec - dec.min()) / (dec.ptp() + 1e-12)
             prob = float(prob[0]) if np.ndim(prob) else float(prob)
-
         pred = int(clf.predict(X)[0])
         label = "Fatigue" if pred == 1 else "Non-fatigue"
         print(f"File: {os.path.basename(f)} -> Predict: {label} (prob={prob:.4f})")
+
 
 if __name__ == "__main__":
     main()

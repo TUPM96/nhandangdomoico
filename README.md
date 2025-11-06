@@ -1,64 +1,76 @@
-# Application of Convolutional Neural Network Methods in Muscle Fatigue Classification Based on Handgrip Strength Estimation Using Surface Electromyography (sEMG)
-This is one of my capstone project for "Biomedical Signal Analysis" course to classifies muscle fatigue using custom CNN and ResNet50 models, based on handgrip strength estimations from Surface Electromyography (sEMG) signals. The Short-Time Fourier Transform (STFT) converts sEMG signals into time-frequency representations for CNN input. 
+# Hướng dẫn chạy 3 giải thuật: SVM, LDA, KNN (sử dụng CLI tương tự)
 
-# Abstract
-Muscle fatigue is characterized by a decline in maximal muscle strength during contraction, often caused by prolonged, intense contractions. This study classifies normal (non-fatigued) muscles versus fatigued muscles through measurements during Maximal Voluntary Contractions (MVCs). Using the Flexor Digitorum Superficialis (FDS) muscle as the basis for Surface Electromyography (sEMG), handgrip strength serves as a key indicator of neuromuscular function, commonly used to assess health and performance. The study involves male and female students aged 20-22 as subjects. EMG signals are collected using Bitalino sensors while subjects grip a handgrip with their non-dominant hand and follow contraction instructions. MVC tests are conducted to record maximal force output before, after, and/or during continuous instructions to measure fatigue patterns. The decline in force output measured in these tests indicates muscle fatigue patterns. The Bitalino sensors connect to a computer with OpenSignals to monitor the EMG signals, with electrodes placed on the FDS muscle. Convolutional Neural Network (CNN) deep learning models are used for data processing and analysis, enabling high-accuracy identification of muscle activity patterns and changes.
+Tài liệu ngắn này mô tả cách chạy 3 thuật toán SVM, LDA và KNN cho bài toán phân lớp mệt mỏi cơ (sEMG) sử dụng cùng phong cách CLI như ví dụ bạn đã có (sEMG_KNN.py). Mục tiêu là:
+- Dùng cùng pipeline (StandardScaler -> SelectKBest -> classifier)
+- Hỗ trợ GridSearchCV (khi bật `--grid`)
+- Hỗ trợ sliding windows, group-aware split (`--group-split`), feature selector (`--fs anova|mi`)
+- Hỗ trợ early-stop theo `--target-acc` và `--max-tries`
 
-# Problem Statement 
-This study aims to develop a classification method for Electromyography (EMG) signals using Convolutional Neural Networks (CNN) to distinguish between handgrip signals from normal patients and those experiencing muscle fatigue. EMG is commonly used in healthcare to record electrical activity from muscles during contraction. Here, the focus is on analyzing handgrip muscle signals, representing the muscle activity involved in gripping.
+---
 
-Muscle fatigue during exercise is a common physiological occurrence that can reduce energy capacity and performance, increasing the risk of sports injuries. Thus, recognizing fatigue based on surface EMG signals plays a crucial role in sports training, rehabilitation, and movement identification. Early detection of muscle fatigue through EMG signal analysis has significant potential for monitoring patient health, especially in physical rehabilitation and sports. Accurate classification methods can help identify changes in muscle activity patterns related to fatigue, providing valuable insights for patient care and management.
+## 1. Yêu cầu (cài đặt)
+Cài các thư viện cần thiết (nếu chưa có):
+```bash
+python -m pip install numpy pandas scipy scikit-learn matplotlib seaborn joblib
+```
 
-# Data Acquisition Method
-## Preparation
-1.	Conduct data collection in a room with a temperature between 25-28°C. Adjust the air conditioning as needed to maintain this range, as the equipment is temperature-sensitive.
-2.	Ensure all equipment is prepared and thoroughly checked, including BiTalino, electrodes, and the laptop running OpenSignal software.
-3.	The subject should sit comfortably and relaxed. If tense, guide them to take deep breaths.
-4.	Data is collected from the non-dominant hand (left hand). Ensure the subject's hand does not touch clothing, especially cotton.
-5.	The subject must remain focused, maintain a neutral facial expression, and avoid speaking, smiling, looking around, or moving their mouth.
-6.	The laptop should not be charged during data collection to avoid electrical noise.
-## Data Collection:
-<p align="center">
-<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/Data%20Acquisition%20Method.png"  width="40%" height="35%"/>
+---
 
-### 1.	Fatigue Measurement:
-- Conduct Maximal Voluntary Contractions (MVCs) tests to measure force output during maximal voluntary effort.
-- Record maximal force output before, during, and after continuous instruction to identify muscle fatigue patterns.
-- Subjects grip a handgrip with maximum strength for 5 seconds (data not recorded), rest for 5 minutes, and then grip at 70% of the maximal force for subsequent tests.
-### 2.	Fatigue and Non-Fatigue Data:
-- Use OpenSignals software connected to BiTalino sensors to record EMG signals from the FDS muscle of the non-dominant hand.
-- Follow the time sequence: stabilize (no movement), grip handgrip for 10 seconds at stable strength (threshold MVC), relax for 5 seconds, and grip again for 5 seconds at full strength to measure fatigue (MVCt). This sequence records non-fatigue data.
-- To obtain fatigue data, the subject repeats the handgrip movement until MVCt > MVCref, noting the repetitions. If this condition is met, record the final data following the same procedure as for non-fatigue data.
+## 2. Cách dùng (CLI mẫu)
+Cú pháp ví dụ chung (sử dụng `sEMG_SVM.py` làm tên script ví dụ — có thể là `sEMG_KNN.py`/`sEMG_LDA.py` hoặc một script hợp nhất):
+```bash
+# SVM: chạy grid-search, sliding, group split, feature selector = mutual_info, dừng sớm khi TestAcc >= 0.85 (max 50 tries)
+python sEMG_SVM.py  --data ./dataset --grid --sliding --win 8000 --step 4000 --group-split --fs mi --target-acc 0.85 --max-tries 50
 
-# Pre-Processing
-### Signal Preprocessing
-<p align="center">
-<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/STFT_Signal.png"  width="40%" height="35%"/>
+# LDA: 
+python sEMG_LDA.py --data ./dataset --grid --sliding --win 8000 --step 4000 --group-split --fs mi --target-acc 0.85 --max-tries 50
 
-- Zero Baseline Correction
-- Absolute Signal
-- Data Normalization
-- Data Filtering
-- Convert Spectrogram Data to Short-Time Fourier Transform (STFT)
-  
-### Image Preprocessing
-- Data Augmentation
-<p align="center">
-<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/Image_Preprop.png"  width="40%" height="35%"/>
+# KNN: 
+python sEMG_KNN.py --data ./dataset --grid --sliding --win 8000 --step 4000 --group-split --fs mi --target-acc 0.85 --max-tries 50
+```
+
+Các tham số quan trọng:
+- --data: thư mục chứa `fatigue/` và `non fatigue/`
+- --grid: bật GridSearchCV
+- --sliding --win --step: bật sliding window
+- --group-split: tách theo file (GroupShuffleSplit) để tránh data leakage từ sliding windows
+- --fs: feature selector (`anova` hoặc `mi`)
+- --target-acc, --max-tries: chế độ early-stop (chạy nhiều seed đến khi đạt hoặc hết tries)
+
+---
 
 
-# Model
+Ghi chú:
+- Ở pipeline ta đặt classifier bước cuối là 'clf' để dễ map tới param grid (ví dụ `clf__C`).
+- SVM dùng `probability=True` để có `predict_proba` (dùng cho ROC/AUC). Lưu ý: training chậm hơn.
+- LDA không hỗ trợ `predict_proba` cho một vài solver; thường LDA có `predict_proba` nếu phù hợp.
 
-| Model          | Number of Parameters | Model Structure |
-|----------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Custom CNN** | 25.710.657           |<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/CNN_model.png"  width="40%" height="35%"/>            |
-| **ResNet50**   | 23.850.113           | <img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/ResNet50_model.png"  width="50%" height="50%"/>      |
 
-# Result
+## 5. Gợi ý grid & chiến lược
+- SVM (RBF) thường hay đạt tốt nhưng chậm khi grid lớn. Bắt đầu với C in [0.1,1,10], kernel rbf/linear.
+- LDA: ít tham số, nhanh, tốt khi features có phân biệt tuyến tính.
+- KNN: tune n_neighbors, weights, metric; có thể tune kbest__k cùng GridSearch.
 
-|                       | Custom CNN           | ResNet50 |
-|-----------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Accuracy**          |<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/CNN_Acc.png"  width="80%" height="80%"/>| <img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/ResNet50_Acc.png"  width="80%" height="80%"/>|
-| **Model Loss**        |<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/CNN_Loss.png"  width="80%" height="80%"/>|<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/ResNet50_Loss.png" width="80%" height="80%"/>|
-| **Confussion Matrix** |<img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/CNN_CF.png"  width="80%" height="80%"/>| <img src="https://github.com/kusumowidi/sEMG-Muscle-Fatigue-Clasification/blob/main/result/ResNet50_CF.png"  width="80%" height="80%"/>|
+---
 
+## 6. Chạy nhiều seed / early-stop
+Script mẫu bạn cho sẵn đã có hai hàm hữu ích:
+- `train_until_target(target_acc, max_tries, ...)` — chạy nhiều seed stop khi đạt target.
+- `repeat_runs(n_runs, ...)` — chạy lặp và lưu CSV.
+
+Sử dụng `--target-acc 0.85 --max-tries 50` để tự động dừng khi có seed đạt TestAcc >= 0.85.
+
+---
+
+## 7. Output mong đợi
+Sau khi chạy thành công (ví dụ với `--grid`):
+- Thư mục `run_artifacts_*` chứa manifest JSON, confusion matrix, ROC, model (pkl), file hardcode params (nếu export).
+- File `best_*_model.pkl` (bundle pipeline + export)
+- Báo cáo classification_report in console
+
+---
+
+## 8. Một vài lưu ý vận hành
+- Nếu dataset nhỏ, GridSearchCV + repeated CV có thể rất chậm. Giảm `cv-splits` hoặc tập mẫu thông số trước.
+- Khi dùng sliding window, luôn bật `--group-split` nếu bạn muốn tránh leakage (một file cung cấp nhiều cửa sổ).
+- Đảm bảo `--fs mi` hoặc `--fs anova` phù hợp: MI (mutual_info) thường phù hợp với quan hệ không tuyến tính.
