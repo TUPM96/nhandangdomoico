@@ -1,0 +1,53 @@
+{
+  "lda": {
+    "accuracy": 0.9026666666666666,
+    "precision": 0.8973684210526316,
+    "recall": 0.9093333333333333,
+    "f1_score": 0.9033112582781457,
+    "confusion_matrix": [
+      [
+        336,
+        39
+      ],
+      [
+        34,
+        341
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n Non-Fatigue       0.91      0.90      0.90       375\n     Fatigue       0.90      0.91      0.90       375\n\n    accuracy                           0.90       750\n   macro avg       0.90      0.90      0.90       750\nweighted avg       0.90      0.90      0.90       750\n"
+  },
+  "knn": {
+    "accuracy": 0.8693333333333333,
+    "precision": 0.9511400651465798,
+    "recall": 0.7786666666666666,
+    "f1_score": 0.8563049853372434,
+    "confusion_matrix": [
+      [
+        360,
+        15
+      ],
+      [
+        83,
+        292
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n Non-Fatigue       0.81      0.96      0.88       375\n     Fatigue       0.95      0.78      0.86       375\n\n    accuracy                           0.87       750\n   macro avg       0.88      0.87      0.87       750\nweighted avg       0.88      0.87      0.87       750\n"
+  },
+  "svm": {
+    "accuracy": 0.9106666666666666,
+    "precision": 0.9031413612565445,
+    "recall": 0.92,
+    "f1_score": 0.9114927344782034,
+    "confusion_matrix": [
+      [
+        338,
+        37
+      ],
+      [
+        30,
+        345
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n Non-Fatigue       0.92      0.90      0.91       375\n     Fatigue       0.90      0.92      0.91       375\n\n    accuracy                           0.91       750\n   macro avg       0.91      0.91      0.91       750\nweighted avg       0.91      0.91      0.91       750\n"
+  }
+}
