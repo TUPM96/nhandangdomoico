@@ -105,9 +105,9 @@ def demo_examples():
 
     # Test với cả 3 models
     models = {
-        'LDA': 'models/lda_model.pkl',
-        'KNN': 'models/knn_model.pkl',
-        'SVM': 'models/svm_model.pkl'
+        'LDA': 'models_final/lda_model.pkl',
+        'KNN': 'models_final/knn_model.pkl',
+        'SVM': 'models_final/svm_model.pkl'
     }
 
     for model_name, model_path in models.items():

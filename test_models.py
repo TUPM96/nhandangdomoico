@@ -284,9 +284,9 @@ def predict_single_sample(model_path, sample_data, feature_names=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test models cho nhận dạng mỏi cơ')
-    parser.add_argument('--test-data', type=str, default='data_generated/test_data.csv',
+    parser.add_argument('--test-data', type=str, default='data_amplified_final/test_data.csv',
                        help='Path đến test data')
-    parser.add_argument('--models-dir', type=str, default='models',
+    parser.add_argument('--models-dir', type=str, default='models_final',
                        help='Thư mục chứa models')
     parser.add_argument('--output-dir', type=str, default='test_results',
                        help='Thư mục lưu kết quả test')
