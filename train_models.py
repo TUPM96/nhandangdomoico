@@ -403,11 +403,11 @@ def train_all_models(train_data_path, test_data_path=None, use_grid_search=True,
 if __name__ == "__main__":
     # Train tất cả models
     results, comparison = train_all_models(
-        train_data_path='data_generated/train_data.csv',
-        test_data_path='data_generated/test_data.csv',
+        train_data_path='data_amplified_final/train_data.csv',
+        test_data_path='data_amplified_final/test_data.csv',
         use_grid_search=True,
-        output_dir='models',
-        plot_dir='plots'
+        output_dir='models_final',
+        plot_dir='plots_final'
     )
 
     print("\n✓ Hoàn tất training tất cả models!")
